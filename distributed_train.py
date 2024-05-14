@@ -10,7 +10,6 @@ from torch.utils.data import DataLoader, Subset
 
 
 # 常量
-WORKERS = 10
 BATCH_SIZE = 128
 LEARNING_RATE = 0.001
 NUM_EPOCHS = 10
@@ -55,7 +54,6 @@ def average_gradients(model):
         param.grad.data /= world                                # 取平均
 
 
-
 def train(rank, world):
     model = simpleCNN.SimpleCNN().to(device)
 
@@ -66,13 +64,13 @@ def train(rank, world):
     torch.manual_seed(1234)
     train_loader, batch_size = load_data(rank, world)
 
-    # 对于该进程，一共有多少个batch
+    # 该进程的batch
     num_batches = math.ceil(len(list(train_loader)) / float(batch_size))
 
     train_accs = []
 
     # epoch的数目与单进程一样
-    for epoch in range(NUM_EPOCHS+1):
+    for epoch in range(1, NUM_EPOCHS + 1):
         train_loss = 0.0
         correct_train = 0
         total_train = 0
@@ -92,17 +90,19 @@ def train(rank, world):
 
         train_acc = correct_train / total_train
         train_accs.append(train_acc)
-        print(f'Rank{rank} epoch {epoch} Loss: { train_loss / num_batches:.6f}  Accuracy:{train_acc:.6f}')
+        print(f'Rank{rank} epoch {epoch} Loss: { train_loss / num_batches:.6f}  Accuracy:{100 * train_acc:.2f}% ')
+
+    return train_accs
 
 
-
-def init_processes(rank, world, func, backend='gloo'):
-    os.environ['MASTER_ADDR'] = '127.0.0.1'
+def init_processes(rank, world, func, q, backend='gloo'):
+    os.environ['MASTER_ADDR'] = 'localhost'
     os.environ['MASTER_PORT'] = '29501'
     dist.init_process_group(backend, rank=rank, world_size=world)
-    func(rank, world)
 
     if torch.distributed.is_initialized():
-        print("当前处于分布式训练环境")
+        print("Rank", rank, "处于分布式训练环境")
     else:
-        print("当前未处于分布式训练环境")
+        print("Rank", rank, "未处于分布式训练环境")
+
+    q.put(func(rank, world))

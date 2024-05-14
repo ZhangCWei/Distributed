@@ -1,3 +1,4 @@
+import time
 import torch
 import simpleCNN
 import torch.nn as nn
@@ -10,7 +11,7 @@ from torchvision import datasets, transforms
 # 常量
 BATCH_SIZE = 128
 LEARNING_RATE = 0.001
-NUM_EPOCHS = 20
+NUM_EPOCHS = 10
 
 
 # 设备配置
@@ -63,8 +64,9 @@ def train(model, optimizer, criterion, train_loader, test_loader, train_accs, te
         train_accs.append(train_acc)
 
         # 在测试集上评估模型
-        test_acc = test(model, criterion, test_loader, test_accs)
-        print(f'Train Accuracy: {train_acc:.2f}%, Test Accuracy: {test_acc:.2f}%')
+        # test_acc = test(model, criterion, test_loader, test_accs)
+        # print(f'Train Accuracy: {100 * train_acc:.2f}%, Test Accuracy: {100 * test_acc:.2f}%')
+        print(f'Train Accuracy: {100 * train_acc:.2f}%')
 
     return
 
@@ -93,6 +95,8 @@ def test(model, criterion, test_loader, test_accs):
 
 if __name__ == '__main__':
 
+    start_time = time.time()
+
     model = simpleCNN.SimpleCNN().to(device)
 
     # 损失函数和优化器
@@ -108,9 +112,13 @@ if __name__ == '__main__':
 
     train(model, optimizer, criterion, train_loader, test_loader, train_accs, test_accs)
 
+    end_time = time.time()
+
+    print("Total time %s s" % (end_time - start_time))
+
     # 绘制学习曲线
     plt.plot(range(1, NUM_EPOCHS + 1), train_accs, label='Train Accuracy')
-    plt.plot(range(1, NUM_EPOCHS + 1), test_accs, label='Test Accuracy')
+    # plt.plot(range(1, NUM_EPOCHS + 1), test_accs, label='Test Accuracy')
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
     plt.legend()
