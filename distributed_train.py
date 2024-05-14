@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader, Subset
 # 常量
 BATCH_SIZE = 128
 LEARNING_RATE = 0.01
-MOMENTUM = 0.2
+MOMENTUM = 0.5
 NUM_EPOCHS = 20
 
 
