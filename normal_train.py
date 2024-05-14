@@ -62,9 +62,9 @@ def train(model, optimizer, criterion, train_loader, test_loader, train_accs, te
         train_accs.append(train_acc)
 
         # 在测试集上评估模型
-        test_acc = test(model, criterion, test_loader, test_accs)
-        print(f'Epoch {epoch} Train Accuracy: {100 * train_acc:.2f}%, Test Accuracy: {100 * test_acc:.2f}%')
-        # print(f'Epoch {epoch} Loss: {train_loss / len(train_loader):.6f} Accuracy: {100 * train_acc:.2f}%')
+        # test_acc = test(model, criterion, test_loader, test_accs)
+        # print(f'Epoch {epoch} Train Accuracy: {100 * train_acc:.2f}%, Test Accuracy: {100 * test_acc:.2f}%')
+        print(f'Epoch {epoch} Loss: {train_loss / len(train_loader):.6f} Accuracy: {100 * train_acc:.2f}%')
 
     return
 
@@ -116,7 +116,7 @@ if __name__ == '__main__':
 
     # 绘制学习曲线
     plt.plot(range(1, NUM_EPOCHS + 1), train_accs, label='Train Accuracy')
-    plt.plot(range(1, NUM_EPOCHS + 1), test_accs, label='Test Accuracy')
+    # plt.plot(range(1, NUM_EPOCHS + 1), test_accs, label='Test Accuracy')
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
     plt.legend()
