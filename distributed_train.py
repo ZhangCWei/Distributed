@@ -11,8 +11,9 @@ from torch.utils.data import DataLoader, Subset
 
 # 常量
 BATCH_SIZE = 128
-LEARNING_RATE = 0.001
-NUM_EPOCHS = 10
+LEARNING_RATE = 0.01
+MOMENTUM = 0.2
+NUM_EPOCHS = 20
 
 
 # 设备配置
@@ -59,7 +60,7 @@ def train(rank, world):
 
     # 损失函数和优化器
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
+    optimizer = optim.SGD(model.parameters(), lr=LEARNING_RATE, momentum=MOMENTUM)
 
     torch.manual_seed(1234)
     train_loader, batch_size = load_data(rank, world)
@@ -90,7 +91,7 @@ def train(rank, world):
 
         train_acc = correct_train / total_train
         train_accs.append(train_acc)
-        print(f'Rank{rank} epoch {epoch} Loss: { train_loss / num_batches:.6f}  Accuracy:{100 * train_acc:.2f}% ')
+        print(f'Rank{rank} Epoch {epoch} Loss: { train_loss / num_batches:.6f}  Accuracy:{100 * train_acc:.2f}% ')
 
     return train_accs
 

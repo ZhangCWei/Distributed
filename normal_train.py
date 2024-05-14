@@ -1,3 +1,4 @@
+import math
 import time
 import torch
 import simpleCNN
@@ -10,8 +11,9 @@ from torchvision import datasets, transforms
 
 # 常量
 BATCH_SIZE = 128
-LEARNING_RATE = 0.001
-NUM_EPOCHS = 10
+LEARNING_RATE = 0.01
+MOMENTUM = 0.5
+NUM_EPOCHS = 20
 
 
 # 设备配置
@@ -39,8 +41,8 @@ def data_load():
 # 训练函数
 def train(model, optimizer, criterion, train_loader, test_loader, train_accs, test_accs):
     model.train()
+
     for epoch in range(1, NUM_EPOCHS + 1):
-        print(f'Epoch:{epoch}:')
         train_loss = 0
         correct_train = 0
         total_train = 0
@@ -57,16 +59,13 @@ def train(model, optimizer, criterion, train_loader, test_loader, train_accs, te
             total_train += target.size(0)
             correct_train += predicted.eq(target).sum().item()
 
-            if batch_idx % 100 == 0:
-                print(f'{100. * batch_idx / len(train_loader):.0f}%  Loss: {loss.item():.6f}')
-
         train_acc = correct_train / total_train
         train_accs.append(train_acc)
 
         # 在测试集上评估模型
-        # test_acc = test(model, criterion, test_loader, test_accs)
-        # print(f'Train Accuracy: {100 * train_acc:.2f}%, Test Accuracy: {100 * test_acc:.2f}%')
-        print(f'Train Accuracy: {100 * train_acc:.2f}%')
+        test_acc = test(model, criterion, test_loader, test_accs)
+        print(f'Epoch {epoch} Train Accuracy: {100 * train_acc:.2f}%, Test Accuracy: {100 * test_acc:.2f}%')
+        # print(f'Epoch {epoch} Loss: {train_loss / len(train_loader):.6f} Accuracy: {100 * train_acc:.2f}%')
 
     return
 
@@ -101,7 +100,7 @@ if __name__ == '__main__':
 
     # 损失函数和优化器
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
+    optimizer = optim.SGD(model.parameters(), lr=LEARNING_RATE, momentum=MOMENTUM)
 
     # 训练数据
     train_loader, test_loader = data_load()
@@ -118,7 +117,7 @@ if __name__ == '__main__':
 
     # 绘制学习曲线
     plt.plot(range(1, NUM_EPOCHS + 1), train_accs, label='Train Accuracy')
-    # plt.plot(range(1, NUM_EPOCHS + 1), test_accs, label='Test Accuracy')
+    plt.plot(range(1, NUM_EPOCHS + 1), test_accs, label='Test Accuracy')
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
     plt.legend()
