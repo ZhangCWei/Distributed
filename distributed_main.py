@@ -28,12 +28,12 @@ if __name__ == "__main__":
     end_time = time.time()
     print("Total time: %s s" % (end_time-start_time))
 
-    train_accs_all = [q.get() for p in processes]
+    accs_all = [q.get() for p in processes]
 
     # 绘制学习曲线
-    print(train_accs_all)
-    for i, train_accs in enumerate(train_accs_all):
-        plt.plot(range(1, len(train_accs_all[0]) + 1), train_accs, label=f'Worker {i+1}')
+    for i, (train_accs, test_accs) in enumerate(accs_all):
+        plt.plot(range(1, len(accs_all[0]) + 1), train_accs, label=f'Worker {i+1}')
+        plt.plot(range(1, len(accs_all[0]) + 1), test_accs, label=f'Test Accuracy')
 
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')

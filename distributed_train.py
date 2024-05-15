@@ -1,4 +1,3 @@
-import math
 import os
 import torch
 import simpleCNN
@@ -59,13 +58,17 @@ def train(rank, world):
 
     # 分布式数据
     train_data = datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
+    test_data = datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
 
     train_sampler = torch.utils.data.distributed.DistributedSampler(train_data, num_replicas=world, rank=rank)
 
     train_loader = torch.utils.data.DataLoader(dataset=train_data, batch_size=BATCH_SIZE, shuffle=False,
                                                pin_memory=True, sampler=train_sampler)
 
+    test_loader = DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=True)
+
     train_accs = []
+    test_accs = []
 
     # epoch的数目与单进程一样
     for epoch in range(1, NUM_EPOCHS + 1):
@@ -89,7 +92,35 @@ def train(rank, world):
 
         train_acc = correct_train / total_train
         train_accs.append(train_acc)
+
         print(f'Rank{rank} Epoch {epoch} Loss: {train_loss / len(train_loader):.6f}  Accuracy:{100 * train_acc:.2f}% ')
 
-    return train_accs
+        if rank == 0:
+            test_accs = test(model, criterion, test_loader, test_accs)
 
+    return train_accs, test_accs
+
+def test(model, criterion, test_loader, test_accs):
+    # 测试模型
+    model.eval()
+    test_loss = 0.0
+    correct_test = 0
+    total_test = 0
+
+    with torch.no_grad():
+        for data, target in test_loader:
+            data, target = data.to(device), target.to(device)
+            output = model(data)
+            loss = criterion(output, target)
+            test_loss += loss.item()
+
+            _, predicted = output.max(1)
+            total_test += target.size(0)
+            correct_test += predicted.eq(target).sum().item()
+
+    test_acc = correct_test / total_test
+    test_accs.append(test_acc)
+
+    print(f'-----\nTest Accuracy:{100 * test_acc:.2f}%\n-----')
+
+    return test_accs
