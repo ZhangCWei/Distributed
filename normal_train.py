@@ -7,13 +7,11 @@ import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
-
 # 常量
 BATCH_SIZE = 128
 LEARNING_RATE = 0.01
 MOMENTUM = 0.5
-NUM_EPOCHS = 20
-
+NUM_EPOCHS = 50
 
 # 设备配置
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -29,7 +27,6 @@ def data_load():
     train_data = datasets.CIFAR10(root='./data', train=True, download=True, transform=transform)
     test_data = datasets.CIFAR10(root='./data', train=False, download=True, transform=transform)
 
-
     # 数据加载
     train_loader = DataLoader(train_data, batch_size=BATCH_SIZE, shuffle=True)
     test_loader = DataLoader(test_data, batch_size=BATCH_SIZE, shuffle=True)
@@ -39,7 +36,6 @@ def data_load():
 
 # 训练函数
 def train(model, optimizer, criterion, train_loader, test_loader, train_accs, test_accs):
-
     for epoch in range(1, NUM_EPOCHS + 1):
         model.train()
         train_loss = 0
@@ -81,6 +77,7 @@ def test(model, criterion, test_loader, test_accs):
             output = model(data)
             loss = criterion(output, target)
             test_loss += loss.item()
+
             _, predicted = output.max(1)
             total_test += target.size(0)
             correct_test += predicted.eq(target).sum().item()
@@ -92,7 +89,6 @@ def test(model, criterion, test_loader, test_accs):
 
 
 if __name__ == '__main__':
-
     start_time = time.time()
 
     model = simpleCNN.SimpleCNN().to(device)

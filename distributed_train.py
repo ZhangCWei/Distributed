@@ -1,5 +1,6 @@
 import os
 import torch
+import random
 import simpleCNN
 import torch.nn as nn
 import torch.optim as optim
@@ -12,7 +13,9 @@ from torchvision import datasets, transforms
 BATCH_SIZE = 128
 LEARNING_RATE = 0.01
 MOMENTUM = 0.5
-NUM_EPOCHS = 20
+NUM_EPOCHS = 50
+ATTACK_TYPE = 0     # 0: 不攻击; 1: Label-Flipping; 2: Data-Flipping
+ATTACK_RATE = 0.0   # 错误比率
 
 
 # 设备配置
@@ -80,6 +83,10 @@ def train(rank, world):
             data, target = data.to(device), target.to(device)
             optimizer.zero_grad()
             output = model(data)
+
+            if ATTACK_TYPE == 1 and ATTACK_RATE >= random.random():
+                target = 9 - target
+
             loss = criterion(output, target)
             train_loss += loss.item()
             loss.backward()  # 反向传播求梯度
@@ -96,9 +103,10 @@ def train(rank, world):
         print(f'Rank{rank} Epoch {epoch} Loss: {train_loss / len(train_loader):.6f}  Accuracy:{100 * train_acc:.2f}% ')
 
         if rank == 0:
-            test_accs = test(model, criterion, test_loader, test_accs)
+            test(model, criterion, test_loader, test_accs)
 
     return train_accs, test_accs
+
 
 def test(model, criterion, test_loader, test_accs):
     # 测试模型
@@ -122,5 +130,3 @@ def test(model, criterion, test_loader, test_accs):
     test_accs.append(test_acc)
 
     print(f'-----\nTest Accuracy:{100 * test_acc:.2f}%\n-----')
-
-    return test_accs
