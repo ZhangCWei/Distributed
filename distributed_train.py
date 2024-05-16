@@ -2,6 +2,7 @@ import os
 import torch
 import random
 import simpleCNN
+from krum import krum
 import torch.nn as nn
 import torch.optim as optim
 import torch.distributed as dist
@@ -17,7 +18,12 @@ LEARNING_RATE = 0.01
 
 # 攻击参数
 ATTACK_TYPE = 0     # 0: 不攻击; 1: Label-Flipping; 2: Data-Flipping
-ATTACK_RATE = 0.0   # 错误比率
+ATTACK_RATE = 0.0   # 攻击成功比率
+ATTACK_NUM = 0      # 攻击节点数量
+
+# 防御参数
+DEFENSE_TYPE = 0    # 0: 不启用防御; 1: 启用防御
+MULTI = True        # True: 启用Multi Krum; False: 启用Krum
 
 
 # 设备配置

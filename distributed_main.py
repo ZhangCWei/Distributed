@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
     # 绘制学习曲线
     for i, (train_accs, test_accs) in enumerate(accs_all):
-        plt.plot(range(1, len(train_accs) + 1), train_accs, label=f'Worker {i+1}')
+        # plt.plot(range(1, len(train_accs) + 1), train_accs, label=f'Worker {i+1}')
         if test_accs:
             plt.plot(range(1, len(test_accs) + 1), test_accs, label=f'Test Accuracy')
 
