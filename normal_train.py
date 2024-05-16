@@ -7,11 +7,13 @@ import matplotlib.pyplot as plt
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
+
 # 常量
-BATCH_SIZE = 128
-LEARNING_RATE = 0.01
 MOMENTUM = 0.5
 NUM_EPOCHS = 50
+BATCH_SIZE = 128
+LEARNING_RATE = 0.01
+
 
 # 设备配置
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')

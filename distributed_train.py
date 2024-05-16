@@ -9,11 +9,13 @@ from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
 
-# 常量
-BATCH_SIZE = 128
-LEARNING_RATE = 0.01
+# 训练参数
 MOMENTUM = 0.5
 NUM_EPOCHS = 50
+BATCH_SIZE = 128
+LEARNING_RATE = 0.01
+
+# 攻击参数
 ATTACK_TYPE = 0     # 0: 不攻击; 1: Label-Flipping; 2: Data-Flipping
 ATTACK_RATE = 0.0   # 错误比率
 
@@ -84,14 +86,24 @@ def train(rank, world):
             optimizer.zero_grad()
             output = model(data)
 
-            if ATTACK_TYPE == 1 and ATTACK_RATE >= random.random():
+            # Label-Flipping
+            if ATTACK_TYPE == 1 and random.random() < ATTACK_RATE:
                 target = 9 - target
 
             loss = criterion(output, target)
             train_loss += loss.item()
-            loss.backward()  # 反向传播求梯度
-            all_reduce_average(model)  # Synchronous All-Reduce SGD
-            optimizer.step()  # 更新参数
+            loss.backward()             # 反向传播求梯度
+
+            # Bit-Flipping
+            if ATTACK_TYPE == 2 :
+                for param in model.parameters():
+                    if param.grad is not None:
+                        grad = param.grad
+                        mask = torch.rand_like(grad) < ATTACK_RATE
+                        grad[mask] = -grad[mask]
+
+            all_reduce_average(model)   # Synchronous All-Reduce SGD
+            optimizer.step()            # 更新参数
 
             _, predicted = output.max(1)
             total_train += target.size(0)
