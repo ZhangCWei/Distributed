@@ -48,7 +48,7 @@ def all_reduce_average(model):
     for param in model.parameters():
         # param.grad.data是每个参数的梯度
         dist.all_reduce(param.grad.data, op=dist.ReduceOp.SUM)  # 求和
-        param.grad.data /= world  # 取平均
+        param.grad.data /= world                                # 取平均
 
 
 def train(rank, world):
@@ -101,14 +101,32 @@ def train(rank, world):
             loss.backward()             # 反向传播求梯度
 
             # Bit-Flipping
-            if ATTACK_TYPE == 2 :
+            if ATTACK_TYPE == 2:
                 for param in model.parameters():
                     if param.grad is not None:
                         grad = param.grad
                         mask = torch.rand_like(grad) < ATTACK_RATE
                         grad[mask] = -grad[mask]
 
-            all_reduce_average(model)   # Synchronous All-Reduce SGD
+            if DEFENSE_TYPE == 0:
+                # 不采用 Krum, 执行 Synchronous All-Reduce SGD
+                all_reduce_average(model)
+            else:
+                # 采用 Krum
+                if rank == 0:
+                    all_grads = [torch.zeros_like(p.grad) for p in model.parameters()]
+                else:
+                    all_grads = [None] * len(list(model.parameters()))
+
+                # 收集参数进行 Krum 并传播
+                dist.gather(model.parameters(), all_grads, dst=0)
+                new_grad = krum(all_grads, ATTACK_NUM, MULTI)
+                dist.broadcast(new_grad, src=0)
+
+                # 更新梯度
+                for param, grad in zip(model.parameters(), new_grad):
+                    param.grad = grad
+
             optimizer.step()            # 更新参数
 
             _, predicted = output.max(1)
