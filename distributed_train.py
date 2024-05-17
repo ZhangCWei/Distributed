@@ -17,12 +17,12 @@ BATCH_SIZE = 128
 LEARNING_RATE = 0.01
 
 # 攻击参数
-ATTACK_TYPE = 0     # 0: 不攻击; 1: Label-Flipping; 2: Data-Flipping
-ATTACK_RATE = 0.0   # 攻击成功比率
+ATTACK_TYPE = 1     # 0: 不攻击; 1: Label-Flipping; 2: Data-Flipping
+ATTACK_RATE = 0.3   # 攻击成功比率
 ATTACK_NUM = 0      # 攻击节点数量
 
 # 防御参数
-DEFENSE_TYPE = 0    # 0: 不启用防御; 1: 启用防御
+DEFENSE_TYPE = 1    # 0: 不启用防御; 1: 启用防御
 MULTI = True        # True: 启用Multi Krum; False: 启用Krum
 
 
