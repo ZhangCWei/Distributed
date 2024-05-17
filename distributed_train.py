@@ -114,18 +114,23 @@ def train(rank, world):
             else:
                 # 采用 Krum
                 if rank == 0:
-                    all_grads = [torch.zeros_like(p.grad) for p in model.parameters()]
+                    for p in model.parameters():
+                        # 新建list存储各节点的梯度
+                        grad_list = [torch.zeros_like(p.grad) for _ in range(world)]
+                        # 获取所有节点的梯度
+                        dist.gather(p.grad, grad_list, async_op=False)
+                        # 计算所有节点的krum梯度
+                        new_grad = krum(grad_list, ATTACK_NUM, MULTI)
+                        # 新建一个list存储将要发到各个节点的平均梯度
+                        scatter_list = [new_grad for _ in range(world)]
+                        # 将所有的值发送到各个节点
+                        dist.scatter(p.grad, scatter_list, src=0, async_op=False)
                 else:
-                    all_grads = [None] * len(list(model.parameters()))
-
-                # 收集参数进行 Krum 并传播
-                dist.gather(model.parameters(), all_grads, dst=0)
-                new_grad = krum(all_grads, ATTACK_NUM, MULTI)
-                dist.broadcast(new_grad, src=0)
-
-                # 更新梯度
-                for param, grad in zip(model.parameters(), new_grad):
-                    param.grad = grad
+                    for p in model.parameters():
+                        # 将grad值发送到node0
+                        dist.gather(p.grad, async_op=False)
+                        # 接收node0发送过来的grad值
+                        dist.scatter(p.grad, src=0, async_op=False)
 
             optimizer.step()            # 更新参数
 
