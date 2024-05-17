@@ -4,7 +4,7 @@ import numpy as np
 
 def krum(grads, ATTACK_NUM, MULTI=False):
 
-    grads_tensor = torch.stack([torch.tensor(grad) for grad in grads])
+    grads_tensor = torch.stack([grad.clone().detach().requires_grad_(True) for grad in grads])
 
     new_grads = []                              # 存储选择的梯度值
     grads_indices = []                          # 所选梯度值在原始梯度列表的索引
@@ -57,6 +57,4 @@ def krum(grads, ATTACK_NUM, MULTI=False):
     # 计算聚合后的梯度 (取平均)
     new_grad = torch.mean(new_grads, dim=0)
 
-    new_grad_list = [grad.cpu().numpy().tolist() for grad in new_grad]
-
-    return new_grad_list, np.array(grads_indices)
+    return new_grad, np.array(grads_indices)

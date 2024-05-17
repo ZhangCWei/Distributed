@@ -9,22 +9,20 @@ import torch.distributed as dist
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
 
-
 # 训练参数
 MOMENTUM = 0.5
-NUM_EPOCHS = 50
+NUM_EPOCHS = 80
 BATCH_SIZE = 128
 LEARNING_RATE = 0.01
 
 # 攻击参数
-ATTACK_TYPE = 1     # 0: 不攻击; 1: Label-Flipping; 2: Data-Flipping
-ATTACK_RATE = 0.3   # 攻击成功比率
-ATTACK_NUM = 0      # 攻击节点数量
+ATTACK_TYPE = 2     # 0: 不攻击; 1: Label-Flipping; 2: Data-Flipping
+ATTACK_RATE = 1.0   # 攻击成功比率
+ATTACK_NUM = 5      # 攻击节点数量
 
 # 防御参数
 DEFENSE_TYPE = 1    # 0: 不启用防御; 1: 启用防御
 MULTI = True        # True: 启用Multi Krum; False: 启用Krum
-
 
 # 设备配置
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -40,7 +38,7 @@ def init_processes(rank, world, func, q, backend='gloo'):
     else:
         print("Rank", rank, "未处于分布式训练环境")
 
-    q.put(func(rank, world))
+    q.put(func(rank, world, (world - rank <= ATTACK_NUM)))
 
 
 def all_reduce_average(model):
@@ -48,10 +46,10 @@ def all_reduce_average(model):
     for param in model.parameters():
         # param.grad.data是每个参数的梯度
         dist.all_reduce(param.grad.data, op=dist.ReduceOp.SUM)  # 求和
-        param.grad.data /= world                                # 取平均
+        param.grad.data /= world  # 取平均
 
 
-def train(rank, world):
+def train(rank, world, IS_ATTACK=False):
     model = simpleCNN.SimpleCNN().to(device)
     model = nn.parallel.DistributedDataParallel(model)
 
@@ -83,32 +81,38 @@ def train(rank, world):
 
     # epoch的数目与单进程一样
     for epoch in range(1, NUM_EPOCHS + 1):
+        model.train()
+        train_sampler.set_epoch(epoch)
+
         train_loss = 0.0
         correct_train = 0
         total_train = 0
-        train_sampler.set_epoch(epoch)
+
         for data, target in train_loader:
             data, target = data.to(device), target.to(device)
             optimizer.zero_grad()
             output = model(data)
 
             # Label-Flipping
-            if ATTACK_TYPE == 1 and random.random() < ATTACK_RATE:
+            if IS_ATTACK and ATTACK_TYPE == 1 and random.random() < ATTACK_RATE:
                 target = 9 - target
 
+            # 求损失
             loss = criterion(output, target)
             train_loss += loss.item()
-            loss.backward()             # 反向传播求梯度
+
+            # 反向传播求梯度
+            loss.backward()
 
             # Bit-Flipping
-            if ATTACK_TYPE == 2:
+            if IS_ATTACK and ATTACK_TYPE == 2:
                 for param in model.parameters():
                     if param.grad is not None:
                         grad = param.grad
                         mask = torch.rand_like(grad) < ATTACK_RATE
                         grad[mask] = -grad[mask]
 
-            if DEFENSE_TYPE == 0:
+            if DEFENSE_TYPE == 0 or 2 * ATTACK_NUM + 2 >= world:
                 # 不采用 Krum, 执行 Synchronous All-Reduce SGD
                 all_reduce_average(model)
             else:
@@ -120,7 +124,7 @@ def train(rank, world):
                         # 获取所有节点的梯度
                         dist.gather(p.grad, grad_list, async_op=False)
                         # 计算所有节点的krum梯度
-                        new_grad = krum(grad_list, ATTACK_NUM, MULTI)
+                        new_grad, _ = krum(grad_list, ATTACK_NUM, MULTI)
                         # 新建一个list存储将要发到各个节点的平均梯度
                         scatter_list = [new_grad for _ in range(world)]
                         # 将所有的值发送到各个节点
@@ -132,7 +136,8 @@ def train(rank, world):
                         # 接收node0发送过来的grad值
                         dist.scatter(p.grad, src=0, async_op=False)
 
-            optimizer.step()            # 更新参数
+            # 更新参数
+            optimizer.step()
 
             _, predicted = output.max(1)
             total_train += target.size(0)
@@ -141,7 +146,8 @@ def train(rank, world):
         train_acc = correct_train / total_train
         train_accs.append(train_acc)
 
-        print(f'Rank{rank} Epoch {epoch} Loss: {train_loss / len(train_loader):.6f}  Accuracy:{100 * train_acc:.2f}% ')
+        print(
+            f'Rank{rank}\tEpoch {epoch}\tLoss: {train_loss / len(train_loader):.6f}  Accuracy:{100 * train_acc:.2f}% ')
 
         if rank == 0:
             test(model, criterion, test_loader, test_accs)

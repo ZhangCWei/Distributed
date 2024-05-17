@@ -10,7 +10,7 @@ from torchvision import datasets, transforms
 
 # 常量
 MOMENTUM = 0.5
-NUM_EPOCHS = 50
+NUM_EPOCHS = 80
 BATCH_SIZE = 128
 LEARNING_RATE = 0.01
 
@@ -113,8 +113,8 @@ if __name__ == '__main__':
     print("Total time %s s" % (end_time - start_time))
 
     # 绘制学习曲线
-    plt.plot(range(1, NUM_EPOCHS + 1), train_accs, label='Train Accuracy')
-    plt.plot(range(1, NUM_EPOCHS + 1), test_accs, label='Test Accuracy')
+    plt.plot(range(1, NUM_EPOCHS + 1), train_accs, label='Train Accuracy', marker='o')
+    plt.plot(range(1, NUM_EPOCHS + 1), test_accs, label='Test Accuracy', marker='o')
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
     plt.legend()
