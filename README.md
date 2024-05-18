@@ -3,7 +3,9 @@
 
 - 本实验使用的数据集为 $\text{CIFAR-10}$，是常用于识别普适物体的经典数据集。共包含 $10$ 个类别的 $3$ 通道彩色 $\text{RGB}$ 图像：飞机、汽车、鸟类、猫、鹿、狗、蛙类、马、船和卡车。图片的尺寸为 $32×32$ ，数据集中一共有 $50000$ 张训练图片和 $10000$ 张测试图片。图片样例如下图所示：
 
+<div align=center>
 <img src="\pic\image-cifar.png" alt="img" style="zoom: 80%;" />
+</div>
 
 ## 评估指标
 
@@ -30,6 +32,6 @@ $$
 - 各文件的功能为：
   - $\text{simpleCNN.py}$：封装有基于 $\text{PyTorch}$ 的 $\text{CIFAR 10 model}$ 类
   - $\text{krum.py}$：封装有实现 $\text{Krum}$ 和 $\text{Multi Krum}$ 算法的函数
-  - $\text{normal\_tarin.py}$：非分布式学习模型的代码
-  - $\text{distributed\_main.py}$：分布式学习模型的启动代码
-  - $\text{distributed\_train.py}$：分布式学习模型的主体代码 (含分布式攻防参数与代码)
+  - $\text{normal tarin.py}$：非分布式学习模型的代码
+  - $\text{distributed main.py}$：分布式学习模型的启动代码
+  - $\text{distributed train.py}$：分布式学习模型的主体代码 (含分布式攻防参数与代码)
