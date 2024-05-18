@@ -36,6 +36,6 @@ $$
 - 各文件的功能为：
   - $\text{simpleCNN.py}$：封装有基于 $\text{PyTorch}$ 的 $\text{CIFAR 10 model}$ 类
   - $\text{krum.py}$：封装有实现 $\text{Krum}$ 和 $\text{Multi Krum}$ 算法的函数
-  - $\text{normal tarin.py}$：非分布式学习模型的代码
+  - $\text{normal train.py}$：非分布式学习模型的代码
   - $\text{distributed main.py}$：分布式学习模型的启动代码
   - $\text{distributed train.py}$：分布式学习模型的主体代码 (含分布式攻防参数与代码)
