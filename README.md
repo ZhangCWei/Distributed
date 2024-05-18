@@ -15,13 +15,17 @@ $$
 \text{Accuracy} = \frac{TP+TN}{TP+TN+FN+FP}
 $$
 
+<div align=center>
 <img src="\pic\image-20240518125358539.png" alt="image-20240518125358539" style="zoom: 67%;" />
+</div>
 
 ## 基础模型
 
 - 本实验采用 $\text{CIFAR 10 model}$ 卷积神经网络模型，具体架构如下所示：
 
+<div align=center>
 <img src="\pic\image-20240518114827642.png" alt="image-20240518114827642" style="zoom:50%;" />
+</div>
 
 ## 实验参数
 
